@@ -1,0 +1,88 @@
+# Local/staging orchestration. For real production, run the backend and
+# indexer as separate services (they scale differently - one API instance
+# behind a load balancer, exactly one indexer instance since it's not
+# designed for concurrent runners), and use a managed Postgres rather than
+# the db service below.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: concord
+      POSTGRES_USER: concord
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+    volumes:
+      - concord_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U concord -d concord"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      STORE_DRIVER: postgres
+      DATABASE_URL: postgres://concord:${DB_PASSWORD:-devpassword}@db:5432/concord
+      DATABASE_SSL: "false"
+      PORT: 4000
+      TRUST_PROXY: "true"
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY}
+      PAYMENT_ASSETS_JSON: ${PAYMENT_ASSETS_JSON}
+      FACTORY_ADDRESS: ${FACTORY_ADDRESS}
+      SWEEPER_INIT_CODE_HASH: ${SWEEPER_INIT_CODE_HASH}
+      REGISTRAR_PRIVATE_KEY: ${REGISTRAR_PRIVATE_KEY}
+      BASE_SEPOLIA_RPC_URL: ${BASE_SEPOLIA_RPC_URL}
+      ARBITRUM_SEPOLIA_RPC_URL: ${ARBITRUM_SEPOLIA_RPC_URL}
+      PRIVY_APP_ID: ${PRIVY_APP_ID}
+      PRIVY_APP_SECRET: ${PRIVY_APP_SECRET}
+      INDEXER_SECRET: ${INDEXER_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "4000:4000"
+
+  indexer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.indexer
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      STORE_DRIVER: postgres
+      DATABASE_URL: postgres://concord:${DB_PASSWORD:-devpassword}@db:5432/concord
+      DATABASE_SSL: "false"
+      API_BASE: http://backend:4000
+      FACTORY_ADDRESS: ${FACTORY_ADDRESS}
+      BASE_SEPOLIA_RPC_URL: ${BASE_SEPOLIA_RPC_URL}
+      ARBITRUM_SEPOLIA_RPC_URL: ${ARBITRUM_SEPOLIA_RPC_URL}
+      INDEXER_SECRET: ${INDEXER_SECRET}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_PRIVY_APP_ID: ${PRIVY_APP_ID}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  concord_pg_data:

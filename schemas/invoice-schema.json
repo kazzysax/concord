@@ -1,0 +1,52 @@
+{
+  "invoiceId": "INV-2026-1041",
+  "invoiceIdHash": "0x...",
+  "status": "issued",
+  "issueDate": "2026-08-08",
+  "dateOfSupply": "2026-08-08",
+  "dueDate": "2026-09-07",
+
+  "seller": {
+    "legalName": "Northgate Supply Ltd",
+    "address": "12 Dockland Way, Bristol, UK",
+    "taxId": "GB123456789"
+  },
+  "buyer": {
+    "legalName": "Kestrel Logistics BV",
+    "address": "Havenstraat 4, Rotterdam, NL",
+    "taxId": "NL863premium24B01"
+  },
+
+  "lineItems": [
+    { "description": "Freight handling, Q3", "quantity": 1, "unitPrice": 3512.40, "taxRate": 0.21 }
+  ],
+  "currency": "EUR",
+  "netTotal": 3512.40,
+  "taxTotal": 737.60,
+  "grossTotal": 4250.00,
+
+  "settlement": {
+    "acceptedChains": ["base-sepolia", "arbitrum-sepolia"],
+    "acceptedTokens": ["USDC", "ETH"],
+    "settlementChain": "base-sepolia",
+    "settlementToken": "USDC",
+    "depositAddress": null,
+    "fxRate": null,
+    "fxRateLockedAt": null,
+    "amountReceived": null,
+    "amountReceivedToken": null,
+    "paymentTxHashes": [],
+    "commitmentOnChain": null
+  },
+
+  "access": [
+    { "role": "seller", "id": "northgate-supply", "grantedAt": "2026-08-08T09:00:00Z" },
+    { "role": "buyer", "id": "kestrel-logistics", "grantedAt": "2026-08-08T09:00:00Z" }
+  ],
+
+  "history": [
+    { "status": "issued", "at": "2026-08-08T09:00:00Z" }
+  ],
+
+  "creditNotes": []
+}

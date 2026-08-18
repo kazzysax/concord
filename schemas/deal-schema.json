@@ -1,0 +1,49 @@
+{
+  "dealId": "DEAL-2026-0088",
+  "status": "negotiating",
+
+  "parties": {
+    "merchant": { "legalName": "Northgate Supply Ltd", "id": "northgate-supply" },
+    "client": { "legalName": "Kestrel Logistics BV", "id": "kestrel-logistics" }
+  },
+
+  "termsVersions": [
+    {
+      "version": 1,
+      "proposedBy": "northgate-supply",
+      "at": "2026-08-08T09:00:00Z",
+      "terms": {
+        "description": "Q3 freight handling contract",
+        "totalValue": 4250.00,
+        "currency": "EUR",
+        "milestones": [
+          { "id": "m1", "label": "Deposit", "percent": 30, "dueOn": "signing" },
+          { "id": "m2", "label": "On delivery", "percent": 70, "dueOn": "2026-09-07" }
+        ],
+        "cancellationTerms": "50% refund if cancelled before delivery, non-refundable after",
+        "disputeResolution": "off-chain mediation, 14 day window"
+      },
+      "acceptedBy": ["northgate-supply"]
+    },
+    {
+      "version": 2,
+      "proposedBy": "kestrel-logistics",
+      "at": "2026-08-08T11:30:00Z",
+      "diffFrom": 1,
+      "changes": [
+        { "field": "milestones[0].percent", "from": 30, "to": 20 },
+        { "field": "cancellationTerms", "from": "50% refund if cancelled before delivery, non-refundable after", "to": "70% refund if cancelled before delivery" }
+      ],
+      "terms": { "...": "full terms object, same shape as v1, with changes applied" },
+      "acceptedBy": ["kestrel-logistics"]
+    }
+  ],
+
+  "frozenContract": null,
+
+  "history": [
+    { "event": "deal_opened", "by": "northgate-supply", "at": "2026-08-08T09:00:00Z" },
+    { "event": "terms_proposed", "version": 1, "by": "northgate-supply", "at": "2026-08-08T09:00:00Z" },
+    { "event": "counter_proposed", "version": 2, "by": "kestrel-logistics", "at": "2026-08-08T11:30:00Z" }
+  ]
+}

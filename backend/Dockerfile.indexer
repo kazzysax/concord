@@ -1,0 +1,14 @@
+# Separate image from the API - the indexer is a standalone process with a
+# different failure mode (it should restart and resume from its checkpoint,
+# not sit behind a load balancer).
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json ./
+RUN npm install --omit=dev
+
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+CMD ["node", "indexer.js"]

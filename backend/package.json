@@ -1,0 +1,19 @@
+{
+  "name": "concord-backend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "indexer": "node indexer.js",
+    "test": "node --test \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ethers": "^6.13.0",
+    "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
+    "@privy-io/server-auth": "^1.18.0",
+    "pg": "^8.13.0"
+  }
+}
