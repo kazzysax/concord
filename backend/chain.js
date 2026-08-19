@@ -30,12 +30,7 @@ let contracts = null;
 function initChain() {
     if (contracts) return contracts;
     if (!FACTORY_ADDRESS || !PRIVATE_KEY || CHAINS.length === 0) {
-        if (process.env.NODE_ENV === "production") {
-            throw new Error("FACTORY_ADDRESS, REGISTRAR_PRIVATE_KEY, and at least one RPC URL are required in production.");
-        }
-        console.warn("chain.js: FACTORY_ADDRESS / REGISTRAR_PRIVATE_KEY / RPC URLs not set - registerOnChain will no-op and log only.");
-        contracts = [];
-        return contracts;
+        throw new Error("FACTORY_ADDRESS, REGISTRAR_PRIVATE_KEY, and at least one RPC URL are required.");
     }
     contracts = CHAINS.map(c => {
         const provider = new ethers.JsonRpcProvider(c.rpc);
@@ -52,11 +47,6 @@ function initChain() {
 async function registerOnChain(invoiceIdString, commitmentHex) {
     const chains = initChain();
     const invoiceIdHash = ethers.keccak256(ethers.toUtf8Bytes(invoiceIdString));
-
-    if (chains.length === 0) {
-        console.log(`[chain stub] would register ${invoiceIdString} -> ${invoiceIdHash} with commitment ${commitmentHex}`);
-        return { registered: false, reason: "no chain config", invoiceIdHash };
-    }
 
     const results = [];
     for (const { name, contract } of chains) {

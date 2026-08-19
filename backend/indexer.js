@@ -18,7 +18,7 @@ const { ethers } = require("ethers");
 const store = require("./store");
 
 const FACTORY_ADDRESS = process.env.FACTORY_ADDRESS;
-if (!FACTORY_ADDRESS) throw new Error("FACTORY_ADDRESS required - see SETUP.md step 2");
+if (!FACTORY_ADDRESS) throw new Error("FACTORY_ADDRESS required. See the repository README deployment section.");
 
 const API_BASE = process.env.API_BASE
     || (process.env.API_HOSTPORT ? `http://${process.env.API_HOSTPORT}` : null)

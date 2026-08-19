@@ -1,94 +1,153 @@
 # Concord
 
-Negotiate, sign, and settle deals without either side getting cheated.
-Two parties meet in a room, talk terms, draft a contract from that
-conversation, both consent, e-sign, and the deed's hash goes on-chain —
-then milestone invoices settle to deterministic addresses that work on
-every EVM chain.
+Concord is a contract workflow app for negotiating, freezing, and tracking milestone-based agreements with on-chain settlement on Polygon.
 
-## Run it
+Two parties can:
 
+- open a deal room
+- negotiate terms
+- accept and consent to a final version
+- freeze the agreement on-chain
+- track milestone invoices tied to deterministic settlement addresses
+
+## Stack
+
+- Frontend: React + Vite
+- Backend: Node.js + Express
+- Auth: Privy
+- Contracts: Solidity + Foundry
+- Chain: Polygon mainnet
+- Settlement token: USDC on Polygon
+
+## Repository layout
+
+- `frontend/` — web app
+- `backend/` — API server and indexer worker
+- `contracts/` — smart contracts, tests, and deploy script
+- `schemas/` — reference JSON schemas
+
+## Local development
+
+Backend:
+
+```bash
+cd backend
+npm install
+npm start
 ```
-# Backend
-cd backend && npm install
-node server.js                 # :4000
 
-# Frontend (second terminal)
-cd frontend && npm install && npm run dev    # :5173
+Frontend:
 
-# Indexer (third terminal, once contracts are deployed)
-cd backend && node indexer.js
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-### Images
-Two photos need dropping in, or the hero/login panels fall back to flat teal:
-- `frontend/public/hero.jpg` — landing hero
-- `frontend/public/signing.jpg` — login left panel
+Indexer:
 
-Free sources: search Unsplash or Pexels for "signing contract pen".
+```bash
+cd backend
+npm run indexer
+```
 
-### Environment
+Default local ports:
+
+- frontend: `5173`
+- backend: `4000`
+
+## Environment
+
+Copy the root example file and fill the values you need:
+
+```bash
+cp .env.example .env
 ```
-FACTORY_ADDRESS=0x...            # after deploying, must match on all chains
-SWEEPER_INIT_CODE_HASH=0x...     # from InvoiceFactory.SWEEPER_INIT_CODE_HASH()
-REGISTRAR_PRIVATE_KEY=0x...      # burner, only registers commitments
-BASE_SEPOLIA_RPC_URL=...
-ARBITRUM_SEPOLIA_RPC_URL=...
-ANTHROPIC_API_KEY=...            # for drafting terms from chat
-```
-Anything unset degrades gracefully — chain.js logs instead of writing,
-/draft returns 503 — so the app runs before contracts are live.
+
+Important production variables:
+
+- `PRIVY_APP_ID`
+- `PRIVY_APP_SECRET`
+- `DATA_ENCRYPTION_KEY`
+- `POLYGON_RPC_URL`
+- `FACTORY_ADDRESS`
+- `SWEEPER_INIT_CODE_HASH`
+- `REGISTRAR_PRIVATE_KEY`
+- `PAYMENT_ASSETS_JSON`
+
+The current production settlement asset is Polygon USDC:
+
+- token: `USDC`
+- address: `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`
 
 ## Contracts
 
+Contract source lives in `contracts/src`.
+
+Useful commands:
+
+```bash
+cd contracts
+forge build
+forge test
 ```
-cd contracts && forge test -vvv                  # run BEFORE deploying
-source .env
-forge script script/Deploy.s.sol --rpc-url base_sepolia     --broadcast --verify
-forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast --verify
-```
-**Then diff the two printed factory addresses.** They must match. Everything
-downstream depends on it.
 
-## Flow
+Polygon deployment uses:
 
-1. **Landing** → problem, solution, five-stage workflow
-2. **Login** — wallet or Google (Privy creates a wallet either way)
-3. **Dashboard** — your deals; start one, get an invite link
-4. **Conference room** — chat freely, then "draft terms from this chat"
-5. **Terms thread** — versioned offers and counters, accept a version
-6. **Consent gate** — BOTH parties tick "no further changes". Nothing reaches
-   the chain without this.
-7. **Freeze** — deed hashed, registered on-chain, milestone addresses derived
-8. **Deed document** — cream paper, wallet signatures, commitment hash
-9. **Track page** — milestone status from the chain only; click one to open
-   its invoice as a document
-10. **Subcontracts** — addenda to a frozen deed, same double-consent rule
+- `contracts/script/Deploy.s.sol`
+- `contracts/foundry.toml`
+- `contracts/.env.example`
 
-The invite link (`/c/{concordId}?token=...`) stays valid the whole time and
-resolves to whichever stage the deal is currently at.
+## Main user flow
 
-## Files
+1. Create a concord
+2. Invite the counterparty
+3. Negotiate and version terms
+4. Accept and consent
+5. Freeze the agreement
+6. Generate milestone invoices
+7. Track payment status
+8. Sweep settled funds to the configured sink
 
-**Contracts** (`contracts/`) — `src/InvoiceFactory.sol`, `src/Sweeper.sol`,
-`test/InvoiceFactory.t.sol`, `script/Deploy.s.sol`, `foundry.toml`, `.env.example`
+## Current state
 
-**Backend** (`backend/`) — `server.js` (invoices, indexer callback), `concord.js`
-(deals, consent, subcontracts, freeze), `chat.js`, `draft.js` (LLM drafting),
-`chain.js` (only file holding a key), `auth.js`, `indexer.js`, `package.json`
+Implemented:
 
-**Frontend** (`frontend/`) — `Landing`, `Login`, `App` (dashboard), `ConcordLink`
-(link resolver), `ConferenceRoom`, `DeedDocument`, `InvoiceDocument`, `TrackPage`,
-`theme.js`, `ui.js`, `AuthContext.jsx`, `api.js`
+- concord creation and invite links
+- versioned term acceptance and consent flow
+- freeze flow
+- milestone invoice tracking
+- Polygon mainnet factory deployment support
+- backend tests for core regressions
 
-**Schemas** (`schemas/`) — `deal-schema.json`, `frozen-contract-example.json`,
-`invoice-schema.json` — reference shapes, not consumed by code directly
+Still worth reviewing before broad production use:
 
-## Known stubs
+- auth wiring should be verified end-to-end in your live Privy project
+- operational secrets should be rotated if they were ever shared insecurely
+- contract and treasury operations should be reviewed before handling material value
 
-- `AuthContext.jsx` fakes Privy — swap for `@privy-io/react-auth`. Backend
-  `auth.js` `verifyStub` is the matching half; replace both together.
-- Signatures are stubbed strings, not real wallet signs. Backend verification
-  (`verifyMessage`) is real and will reject bad ones once wired.
-- Viewing keys use fixed passphrases, not real key exchange.
-- CCTP cross-chain settlement and stealth addresses are architecture, not code.
+## Deployment
+
+The repo is prepared for hosted deployment, but production requires:
+
+- a Postgres-backed backend
+- Privy credentials
+- Polygon RPC access
+- deployed contract values
+
+If you are deploying manually, make sure backend and indexer receive the same:
+
+- `FACTORY_ADDRESS`
+- `POLYGON_RPC_URL`
+
+And the backend additionally receives:
+
+- `SWEEPER_INIT_CODE_HASH`
+- `REGISTRAR_PRIVATE_KEY`
+- `DATA_ENCRYPTION_KEY`
+
+## Notes
+
+- `backend/chain.js` and the contracts deploy script are the sensitive on-chain integration points.
+- `backend/indexer.js` watches the deployed factory and updates application state from chain activity.
+- `frontend/src/api.js` supports a configurable API base URL through `VITE_API_BASE_URL`.

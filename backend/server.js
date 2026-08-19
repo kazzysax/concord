@@ -10,7 +10,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { keccak256, getCreate2Address, toUtf8Bytes } = require("ethers");
 const { registerOnChain, sweepOnChain } = require("./chain");
-const { requireAuth, requireIndexer, DEV_AUTH } = require("./auth");
+const { requireAuth, requireIndexer } = require("./auth");
 const { rateLimit, validate, ID_PATTERN, securityHeaders } = require("./middleware");
 const store = require("./store");
 
@@ -28,13 +28,6 @@ app.use(cors({
 app.use(express.json({ limit: "256kb" }));
 app.use(securityHeaders);
 app.use(rateLimit({ windowMs: 60_000, max: 120 }));
-
-if (DEV_AUTH) {
-    console.warn("=".repeat(70));
-    console.warn("DEV AUTH MODE: tokens are not verified. Do not expose this port.");
-    console.warn("Set PRIVY_APP_ID + PRIVY_APP_SECRET before any real deployment.");
-    console.warn("=".repeat(70));
-}
 
 // --- Config -----------------------------------------------------------
 const FACTORY_ADDRESS = process.env.FACTORY_ADDRESS || "0x0000000000000000000000000000000000dEaD";
@@ -409,7 +402,7 @@ const draftRouter = require("./draft")({
 app.use("/", draftRouter);
 
 app.get("/health", async (req, res) => {
-    res.json({ ok: true, store: store.driver, devAuth: DEV_AUTH });
+    res.json({ ok: true, store: store.driver, auth: "privy" });
 });
 
 app.get("/ready", async (req, res) => {
@@ -432,7 +425,7 @@ app.use((err, req, res, next) => {
     await store.init();
     const PORT = process.env.PORT || 4000;
     const server = app.listen(PORT, () => {
-        console.log(`Invoice API on :${PORT} · store=${store.driver} · auth=${DEV_AUTH ? "DEV (unverified)" : "privy"}`);
+        console.log(`Invoice API on :${PORT} · store=${store.driver} · auth=privy`);
     });
     const shutdown = () => server.close(async () => { await store.close(); process.exit(0); });
     process.on("SIGTERM", shutdown);
