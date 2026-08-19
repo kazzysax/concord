@@ -14,4 +14,4 @@ COPY . .
 # whole point of STORE_DRIVER=postgres in prod is to not need one.
 RUN mkdir -p /app/data
 EXPOSE 4000
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node ${APP_ENTRY:-server.js}"]
